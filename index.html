@@ -105,72 +105,75 @@
 
   <div id="loading">Loading hot tokens...</div>
   <div id="tokens"></div>
+<script>
+  async function loadTokens() {
+    const container = document.getElementById("tokens");
+    const loading = document.getElementById("loading");
+    container.innerHTML = "";
 
-  <script>
-    async function loadTokens() {
-      const container = document.getElementById("tokens");
-      const loading = document.getElementById("loading");
-      container.innerHTML = "";
+    try {
+      // Now fetch from YOUR OWN Vercel API route (no CORS issue)
+      const res = await fetch("/api/tokens");
 
-      try {
-        // Best free proxy for "trending-like" in 2026: top boosted tokens (most active promotions)
-        // Alternative: '/token-profiles/latest/v1' for recently updated/new profiles
-        const proxy = "https://api.allorigins.win/raw?url=";
-        const apiUrl = "https://api.dexscreener.com/token-boosts/top/v1";
-
-        const res = await fetch(proxy + encodeURIComponent(apiUrl));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-
-        // Data is usually an array of boosted token objects
-        const items = Array.isArray(data) ? data : data?.boosts || [];
-
-        if (items.length === 0) {
-          throw new Error("No boosted tokens found");
-        }
-
-        // Optional: sort by some proxy metric if available (e.g. total boost amount)
-        items.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
-
-        // Show top 20
-        items.slice(0, 20).forEach(item => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          const logo = item.icon || "https://via.placeholder.com/64?text=?";
-          const name = item.header || "Unknown";
-          const symbol = item.tokenAddress?.slice(0,6) + "..." || "?";
-          const chain = item.chainId || "multi";
-
-          // Some boosted items may not have full pair stats → show what we have
-          const price = item.priceUsd ? `\[ {parseFloat(item.priceUsd).toFixed(5)}` : "—";
-          const volume = item.volume?.h24 ? ` \]{parseFloat(item.volume.h24).toLocaleString()}` : "—";
-
-          card.innerHTML = `
-            <img class="token-logo" src="\( {logo}" alt=" \){name}" 
-                 onerror="this.outerHTML='<div class=\\'token-logo token-logo-fallback\\'>?</div>'">
-            <h3>\( {name} ( \){symbol})</h3>
-            <div class="info"><b>Chain:</b> ${chain}</div>
-            <div class="info"><b>Price:</b> ${price}</div>
-            <div class="info"><b>24h Vol:</b> ${volume}</div>
-            <a href="https://dexscreener.com/\( {chain}/ \){item.pairAddress || item.tokenAddress}" target="_blank">
-              View on DexScreener →
-            </a>
-          `;
-
-          container.appendChild(card);
-        });
-
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p class="error">Failed to load tokens: ${err.message}</p>`;
-      } finally {
-        loading.style.display = "none";
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || `HTTP error ${res.status}`);
       }
-    }
 
-    loadTokens();
-  </script>
+      const data = await res.json();
+
+      // DexScreener /token-boosts/top/v1 returns a plain ARRAY of objects
+      const items = Array.isArray(data) ? data : [];
+
+      if (items.length === 0) {
+        throw new Error("No boosted tokens available right now");
+      }
+
+      // Sort by totalAmount descending (highest boosted first)
+      items.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+
+      // Show top 20
+      items.slice(0, 20).forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const logo = item.icon 
+          ? `https://dd.dexscreener.com/ds-data/tokens/\( {item.chainId}/ \){item.tokenAddress}/icon` 
+          : "https://via.placeholder.com/64?text=?";
+
+        const name = item.description?.split(' ')[0] || "Unknown Token";
+        const symbol = item.tokenAddress?.slice(0, 6) + "..." || "?";
+        const chain = item.chainId || "unknown";
+        const boostAmount = item.totalAmount ? item.totalAmount.toLocaleString() : "—";
+
+        // Price/volume not always in boosts response → show boost strength instead
+        const price = "—";   // API doesn't include priceUsd here
+        const volume = "—";
+
+        card.innerHTML = `
+          <img class="token-logo" src="\( {logo}" alt=" \){name}" 
+               onerror="this.outerHTML='<div class=\\'token-logo token-logo-fallback\\'>?</div>'">
+          <h3>\( {name} ( \){symbol})</h3>
+          <div class="info"><b>Chain:</b> ${chain}</div>
+          <div class="info"><b>Boost Amount:</b> ${boostAmount}</div>
+          <div class="info"><b>Price:</b> ${price}</div>
+          <a href="\( {item.url || `https://dexscreener.com/ \){chain}/${item.tokenAddress}`}" target="_blank">
+            View on DexScreener →
+          </a>
+        `;
+
+        container.appendChild(card);
+      });
+
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = `<p class="error">Failed to load tokens: ${err.message}</p>`;
+    } finally {
+      loading.style.display = "none";
+    }
+  }
+
+  loadTokens();
+        </script>
 </body>
 </html>
