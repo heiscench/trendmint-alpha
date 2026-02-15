@@ -65,39 +65,42 @@
 
   <div id="tokens"></div>
 
-  <script>
-    async function loadTokens() {
-      try {
-        const res = await fetch("https://api.dexscreener.com/latest/dex/pairs");
-        const data = await res.json();
+<script>
+async function loadTokens() {
+  try {
+    const res = await fetch("https://api.dexscreener.com/latest/dex/tokens");
+    const data = await res.json();
 
-        const container = document.getElementById("tokens");
-        container.innerHTML = "";
+    const container = document.getElementById("tokens");
+    container.innerHTML = "";
 
-        data.pairs.slice(0, 20).forEach(pair => {
-          const card = document.createElement("div");
-          card.className = "card";
+    // Check the structure: some APIs return data directly in an array
+    const pairs = data.pairs || data; // fallback if 'pairs' doesn't exist
 
-          card.innerHTML = `
-            <img class="token-logo" src="${pair.baseToken.logo}" alt="${pair.baseToken.name}">
-            <h3>${pair.baseToken.name} (${pair.baseToken.symbol})</h3>
-            <p><b>Chain:</b> ${pair.chainId}</p>
-            <p><b>Price:</b> $${parseFloat(pair.priceUsd).toFixed(5)}</p>
-            <p><b>24h Volume:</b> $${parseFloat(pair.volume.h24).toLocaleString()}</p>
-            <a href="https://dexscreener.com/${pair.chainId}/${pair.pairAddress}" target="_blank">View Chart →</a>
-          `;
+    pairs.slice(0, 20).forEach(pair => {
+      const card = document.createElement("div");
+      card.className = "card";
 
-          container.appendChild(card);
-        });
+      card.innerHTML = `
+        <img class="token-logo" src="${pair.baseToken.logo}" alt="${pair.baseToken.name}">
+        <h3>${pair.baseToken.name} (${pair.baseToken.symbol})</h3>
+        <p><b>Chain:</b> ${pair.chainId}</p>
+        <p><b>Price:</b> $${parseFloat(pair.priceUsd).toFixed(5)}</p>
+        <p><b>24h Volume:</b> $${parseFloat(pair.volume.h24).toLocaleString()}</p>
+        <a href="https://dexscreener.com/${pair.chainId}/${pair.pairAddress}" target="_blank">View Chart →</a>
+      `;
 
-      } catch (err) {
-        document.getElementById("tokens").innerHTML = "Failed to load tokens";
-        console.log(err);
-      }
-    }
+      container.appendChild(card);
+    });
 
-    loadTokens();
-  </script>
+  } catch (err) {
+    document.getElementById("tokens").innerHTML = "Failed to load tokens";
+    console.log(err);
+  }
+}
+
+loadTokens();
+</script>
 </body>
 
 </html>
