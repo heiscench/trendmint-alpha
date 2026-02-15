@@ -68,15 +68,14 @@
 <script>
 async function loadTokens() {
   try {
-    // Use CORS proxy to bypass GitHub Pages restrictions
+    // Use CORS proxy
     const res = await fetch("https://api.allorigins.win/raw?url=https://api.dexscreener.com/latest/dex/tokens");
     const data = await res.json();
 
     const container = document.getElementById("tokens");
     container.innerHTML = "";
 
-    // Use data directly or fallback
-    const pairs = data.pairs || data;
+    const pairs = data.pairs || data; // fallback
 
     pairs.slice(0, 20).forEach(pair => {
       const card = document.createElement("div");
