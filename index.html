@@ -27,11 +27,11 @@ async function loadTokens() {
       card.className = "card";
 
       card.innerHTML = `
-        <h3>${token.tokenName} (${token.symbol})</h3>
+        <h3>Token Boost</h3>
         <p>Chain: ${token.chainId}</p>
-        <p>Liquidity: $${token.liquidity}</p>
-        <p>Boosts: ${token.boosts}</p>
-        <a href="https://dexscreener.com/${token.chainId}/${token.address}" target="_blank">View Chart</a>
+        <p>Boost Amount: ${token.amount}</p>
+        <p>Total Boost: ${token.totalAmount}</p>
+        <a href="${token.url}" target="_blank">View Chart</a>
       `;
 
       container.appendChild(card);
