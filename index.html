@@ -64,7 +64,6 @@
   <p>Find trending tokens across all chains before they pump</p>
 
   <div id="tokens"></div>
-
 <script>
 async function loadTokens() {
   try {
@@ -75,7 +74,7 @@ async function loadTokens() {
     const container = document.getElementById("tokens");
     container.innerHTML = "";
 
-    const pairs = data.pairs || data; // fallback
+    const pairs = data.pairs || data;
 
     pairs.slice(0, 20).forEach(pair => {
       const card = document.createElement("div");
@@ -100,7 +99,7 @@ async function loadTokens() {
 }
 
 loadTokens();
-</script>
+      </script>
 </body>
 
 </html>
