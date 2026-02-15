@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,28 +8,41 @@
     body {
       background: #0b0f14;
       color: #e6edf3;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
     }
 
     h1 {
       color: #58a6ff;
+      text-align: center;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #8b949e;
+    }
+
+    #loading {
+      text-align: center;
+      font-size: 1.2em;
+      margin: 40px 0;
+      color: #58a6ff;
     }
 
     #tokens {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
       margin-top: 20px;
     }
 
     .card {
       background: #111821;
-      padding: 15px;
+      padding: 16px;
       border-radius: 14px;
       border: 1px solid #1f2937;
-      transition: 0.2s;
+      transition: all 0.25s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -38,68 +50,127 @@
     }
 
     .card:hover {
-      transform: translateY(-4px);
+      transform: translateY(-6px);
       border-color: #58a6ff;
+      box-shadow: 0 8px 24px rgba(88, 166, 255, 0.12);
     }
 
     .token-logo {
-      width: 50px;
-      height: 50px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      background: #1f2937;
+      object-fit: cover;
+    }
+
+    .token-logo-fallback {
+      font-size: 32px;
+    }
+
+    h3 {
+      margin: 8px 0 4px;
+      font-size: 1.2em;
+    }
+
+    .info {
+      color: #8b949e;
+      font-size: 0.95em;
+      margin: 4px 0;
     }
 
     a {
       color: #58a6ff;
       text-decoration: none;
       font-weight: bold;
-      margin-top: 8px;
+      margin-top: 12px;
       display: inline-block;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: #79c0ff;
+    }
+
+    .error {
+      color: #f85149;
+      text-align: center;
+      margin: 40px 0;
     }
   </style>
 </head>
-
 <body>
   <h1>🔥 TrendMint Alpha</h1>
-  <p>Find trending tokens across all chains before they pump</p>
+  <p class="subtitle">Hot & boosted tokens across chains — catch them before they move</p>
 
+  <div id="loading">Loading hot tokens...</div>
   <div id="tokens"></div>
-<script>
-async function loadTokens() {
-  try {
-    // Use CORS proxy
-    const res = await fetch("https://api.allorigins.win/raw?url=https://api.dexscreener.com/latest/dex/tokens");
-    const data = await res.json();
 
-    const container = document.getElementById("tokens");
-    container.innerHTML = "";
+  <script>
+    async function loadTokens() {
+      const container = document.getElementById("tokens");
+      const loading = document.getElementById("loading");
+      container.innerHTML = "";
 
-    const pairs = data.pairs || data;
+      try {
+        // Best free proxy for "trending-like" in 2026: top boosted tokens (most active promotions)
+        // Alternative: '/token-profiles/latest/v1' for recently updated/new profiles
+        const proxy = "https://api.allorigins.win/raw?url=";
+        const apiUrl = "https://api.dexscreener.com/token-boosts/top/v1";
 
-    pairs.slice(0, 20).forEach(pair => {
-      const card = document.createElement("div");
-      card.className = "card";
+        const res = await fetch(proxy + encodeURIComponent(apiUrl));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      card.innerHTML = `
-        <img class="token-logo" src="${pair.baseToken.logo}" alt="${pair.baseToken.name}">
-        <h3>${pair.baseToken.name} (${pair.baseToken.symbol})</h3>
-        <p><b>Chain:</b> ${pair.chainId}</p>
-        <p><b>Price:</b> $${parseFloat(pair.priceUsd).toFixed(5)}</p>
-        <p><b>24h Volume:</b> $${parseFloat(pair.volume.h24).toLocaleString()}</p>
-        <a href="https://dexscreener.com/${pair.chainId}/${pair.pairAddress}" target="_blank">View Chart →</a>
-      `;
+        const data = await res.json();
 
-      container.appendChild(card);
-    });
+        // Data is usually an array of boosted token objects
+        const items = Array.isArray(data) ? data : data?.boosts || [];
 
-  } catch (err) {
-    document.getElementById("tokens").innerHTML = "Failed to load tokens";
-    console.log(err);
-  }
-}
+        if (items.length === 0) {
+          throw new Error("No boosted tokens found");
+        }
 
-loadTokens();
-      </script>
+        // Optional: sort by some proxy metric if available (e.g. total boost amount)
+        items.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+
+        // Show top 20
+        items.slice(0, 20).forEach(item => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const logo = item.icon || "https://via.placeholder.com/64?text=?";
+          const name = item.header || "Unknown";
+          const symbol = item.tokenAddress?.slice(0,6) + "..." || "?";
+          const chain = item.chainId || "multi";
+
+          // Some boosted items may not have full pair stats → show what we have
+          const price = item.priceUsd ? `\[ {parseFloat(item.priceUsd).toFixed(5)}` : "—";
+          const volume = item.volume?.h24 ? ` \]{parseFloat(item.volume.h24).toLocaleString()}` : "—";
+
+          card.innerHTML = `
+            <img class="token-logo" src="\( {logo}" alt=" \){name}" 
+                 onerror="this.outerHTML='<div class=\\'token-logo token-logo-fallback\\'>?</div>'">
+            <h3>\( {name} ( \){symbol})</h3>
+            <div class="info"><b>Chain:</b> ${chain}</div>
+            <div class="info"><b>Price:</b> ${price}</div>
+            <div class="info"><b>24h Vol:</b> ${volume}</div>
+            <a href="https://dexscreener.com/\( {chain}/ \){item.pairAddress || item.tokenAddress}" target="_blank">
+              View on DexScreener →
+            </a>
+          `;
+
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p class="error">Failed to load tokens: ${err.message}</p>`;
+      } finally {
+        loading.style.display = "none";
+      }
+    }
+
+    loadTokens();
+  </script>
 </body>
-
 </html>
