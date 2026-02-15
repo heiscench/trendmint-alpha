@@ -68,14 +68,15 @@
 <script>
 async function loadTokens() {
   try {
-    const res = await fetch("https://api.dexscreener.com/latest/dex/tokens");
+    // Use CORS proxy to bypass GitHub Pages restrictions
+    const res = await fetch("https://api.allorigins.win/raw?url=https://api.dexscreener.com/latest/dex/tokens");
     const data = await res.json();
 
     const container = document.getElementById("tokens");
     container.innerHTML = "";
 
-    // Check the structure: some APIs return data directly in an array
-    const pairs = data.pairs || data; // fallback if 'pairs' doesn't exist
+    // Use data directly or fallback
+    const pairs = data.pairs || data;
 
     pairs.slice(0, 20).forEach(pair => {
       const card = document.createElement("div");
