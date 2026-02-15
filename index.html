@@ -68,25 +68,20 @@ async function loadTokens() {
       card.className = "card";
 
       card.innerHTML = `
-        <h3>Token Boost</h3>
-        <p>Chain: ${token.chainId}</p>
-        <p>Boost Amount: ${token.amount}</p>
-        <p>Total Boost: ${token.totalAmount}</p>
-        <a href="${token.url}" target="_blank">View Chart</a>
-      `;
-
-      container.appendChild(card);
-    });
-
-  } catch(err) {
-    document.getElementById("tokens) card.innerHTML = `
   <h3>🚀 Boosted Token</h3>
   <p><b>Chain:</b> ${token.chainId}</p>
   <p><b>Boost:</b> ${token.amount}</p>
   <p><b>Total Boost:</b> ${token.totalAmount}</p>
   <a href="${token.url}" target="_blank">Open Chart →</a>
-`; = "Failed to load tokens";
-    console.log(err);
+`;
+
+      container.appendChild(card);
+    });
+
+  } catch(err) {
+  document.getElementById("tokens").innerHTML = "Failed to load tokens";
+  console.log(err);
+  }
   }
 }
 
